@@ -20,18 +20,24 @@
 %% Step 0: Demo inputs
 maxIterations = 100; %max number of turns during perpendicular calculations
 epsilon = 5; %in pixels
+saveFile = 'testOutput.png';
 
 %% Step 1: Input Image
-inputImage = imload('testturtle.png');
+inputImage = imread('./ExampleImages/swan_dd_300.gif');
+f = figure; imagesc(inputImage);
+[cutVertices.x,cutVertices.y] = getpts(f);
 
 %% Step 2: Generate image straight skeleton 
-[] = generateStraightSkeleton(inputImage); 
+[straightSkeleton] = generateStraightSkeleton(cutVertices); 
 
 %% Step 3: Generate image perpendiculars
-[]= generateImagePerpendiculars();
+[perpendiculars]= generateImagePerpendiculars(cutVertices, straightSkeleton);
 
 %% Step 4: Assign Mountain/Valley to fold pattern
-[]=assignMountainValley();
+[mountains, valleys]=assignMountainValley(cutVertices, straightSkeleton, perpendiculars);
+
+%% Plot up and save generated fold pattern
+outputImage = plotFoldPattern(cutVertices, straightSkeleton, perpendiculars, mountains, valleys, saveFile);
 
 %% Step 5: Check for degeneracy and flat foldability
 []=checkDegeneracy();
