@@ -5,16 +5,6 @@
 % 5) optimize number of folds (move around points small amounts to reduce number of perpendicular folds?)
 % 
 % Take in image.  Find all vertices of shape. 
-% Straight skeleton pseudo code: 
-% assumption: each vertex is the intersection point of two (and only two lines)
-% For each vertex: 
-%   Create vectors for each line. 
-%   Calculate angle between two intersecting lines.  
-%   Calculate the bisecting angle  
-%   Calculate the vector for the bisector.
-%   Calculate intersections of all the angular bisector lines.  -> (take unit vectors, u + v is angle bisector)
-%   Choose the "first" intersection of each set, adding the intersection point onto the vertex list.  
-% If have hanging vertex (like inside of turtle), connect them up. 
 % 
 
 %% Step 0: Demo inputs
@@ -23,25 +13,37 @@ epsilon = 5; %in pixels
 saveFile = 'testOutput.png';
 
 %% Step 1: Input Image
-inputImage = imread('./ExampleImages/swan_dd_300.gif');
-f = figure; imagesc(inputImage);
-[cutVertices.x,cutVertices.y] = getpts(f);
+%inputImage = imread('./ExampleImages/swan_dd_300.gif');
+%f = figure; imagesc(inputImage);
+%disp('Click on the vertices of the cut outline in order.  Hit enter when done.');
+%[foldPattern.cutVertices.x,foldPattern.cutVertices.y] = getpts(f);
+load('swanpts.mat');
 
 %% Step 2: Generate image straight skeleton 
-[straightSkeleton] = generateStraightSkeleton(cutVertices); 
+[foldPattern.straightSkeleton] = generateStraightSkeleton(foldPattern.cutVertices); 
+foldPattern.straightSkeleton.figHandle = drawStraightSkeleton(foldPattern.cutVertices,foldPattern.straightSkeleton);
 
 %% Step 3: Generate image perpendiculars
-[perpendiculars]= generateImagePerpendiculars(cutVertices, straightSkeleton);
+[foldPattern]= generateImagePerpendiculars(foldPattern);
+foldPattern.perpendiculars.figHandle = drawImagePerpendiculars(foldPattern.cutVertices,...
+    foldPattern.perpendiculars,foldPattern.straightSkeleton.figHandle);
 
 %% Step 4: Assign Mountain/Valley to fold pattern
-[mountains, valleys]=assignMountainValley(cutVertices, straightSkeleton, perpendiculars);
+[foldPattern]=assignMountainValley(foldPattern);
 
 %% Plot up and save generated fold pattern
-outputImage = plotFoldPattern(cutVertices, straightSkeleton, perpendiculars, mountains, valleys, saveFile);
+[foldPattern] = plotFoldPattern(foldPattern, saveFile);
+figure; imagesc(foldPattern.outputImage);
 
 %% Step 5: Check for degeneracy and flat foldability
-[]=checkDegeneracy();
-[]=checkFlatFoldabilty();
+[foldPattern]=checkDegeneracy(foldPattern);
+if foldPattern.degeneracyFlag == 1
+    disp('Error: Code output a degenerate fold pattern.  Please try again.');
+end
 
+[foldPattern]=checkFlatFoldabilty(foldPattern);
+if foldPattern.flatFoldabilityFlag ~= 1
+    disp('Error: Code output a non flat-foldable pattern.  Please try again.');
+end
 %% Step 6: (Optional) Fold Optimization Scheme, modify image points slightly to attempt to optimize the nuber of folds
-[]=foldOptimization();
+[optimizedFoldPattern]=foldOptimization(foldPattern);
